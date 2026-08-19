@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Form Visualisasi Lapangan — Kelapa Sawit</title>
+
+<!-- iOS: jadikan "Add to Home Screen" tampil seperti aplikasi -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Form Lapangan">
+<link rel="apple-touch-icon" href="icon-180.png">
+
+<!-- Android / umum -->
+<meta name="theme-color" content="#213D2B">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-512.png" sizes="512x512" type="image/png">
+
+<style>
+  :root{
+    --hijau-tua:#213D2B;
+    --hijau:#3C6B45;
+    --hijau-muda:#EAF1E7;
+    --emas:#C98A2B;
+    --emas-terang:#F0B255;
+    --bg:#F5F6F2;
+    --kartu:#FFFFFF;
+    --teks:#1E241E;
+    --teks-muted:#6B7568;
+    --garis:#DCE2D8;
+    --merah:#B3432E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--teks);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding-bottom:100px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  header{
+    background:linear-gradient(135deg,var(--hijau-tua),var(--hijau));
+    color:#fff;
+    padding:22px 18px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::after{
+    content:"";
+    position:absolute;
+    right:-30px;top:-30px;
+    width:140px;height:140px;
+    border-radius:50%;
+    background:rgba(240,178,85,0.18);
+  }
+  header h1{
+    margin:0;
+    font-size:1.28rem;
+    letter-spacing:0.2px;
+    position:relative;
+  }
+  header p{
+    margin:6px 0 0;
+    font-size:0.83rem;
+    color:#D7E4D2;
+    position:relative;
+  }
+  .eyebrow{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:0.68rem;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--emas-terang);
+    margin-bottom:4px;
+    display:block;
+  }
+
+  main{max-width:640px;margin:0 auto;padding:16px;}
+
+  .card{
+    background:var(--kartu);
+    border:1px solid var(--garis);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .card h2{
+    font-size:0.95rem;
+    margin:0 0 4px;
+    color:var(--hijau-tua);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .card h2 .num{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:0.72rem;
+    background:var(--hijau-muda);
+    color:var(--hijau-tua);
+    border-radius:6px;
+    padding:2px 7px;
+  }
+  .card .sub{
+    font-size:0.76rem;
+    color:var(--teks-muted);
+    margin:0 0 14px;
+  }
+
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  .field label.text-label{
+    display:block;
+    font-size:0.82rem;
+    font-weight:600;
+    margin-bottom:6px;
+    color:var(--teks);
+  }
+  input[type=text], textarea{
+    width:100%;
+    border:1px solid var(--garis);
+    border-radius:9px;
+    padding:10px 11px;
+    font-size:0.92rem;
+    font-family:inherit;
+    background:#FCFCFA;
+    color:var(--teks);
+  }
+  input[type=text]:focus, textarea:focus{
+    outline:none;
+    border-color:var(--hijau);
+    background:#fff;
+  }
+  textarea{resize:vertical;min-height:56px;line-height:1.4;}
+
+  .group-title{
+    font-size:0.82rem;
+    font-weight:600;
+    margin:0 0 8px;
+    color:var(--teks);
+  }
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+  }
+  .opt{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    border:1px solid var(--garis);
+    border-radius:10px;
+    padding:9px 11px;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .opt:active{background:var(--hijau-muda);}
+  .opt input{position:absolute;opacity:0;pointer-events:none;}
+  .opt .letter{
+    flex:0 0 auto;
+    width:26px;height:26px;
+    border-radius:7px;
+    border:1.5px solid var(--garis);
+    display:flex;align-items:center;justify-content:center;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:0.8rem;
+    font-weight:700;
+    color:var(--teks-muted);
+    background:#fff;
+    transition:all .15s;
+  }
+  .opt .desc{font-size:0.86rem;line-height:1.35;padding-top:2px;}
+  .opt.selected{
+    border-color:var(--hijau);
+    background:var(--hijau-muda);
+  }
+  .opt.selected .letter{
+    background:var(--hijau);
+    border-color:var(--hijau);
+    color:#fff;
+  }
+
+  .section-block + .section-block{
+    margin-top:18px;
+    padding-top:16px;
+    border-top:1px dashed var(--garis);
+  }
+
+  /* bottom action bar */
+  .bar{
+    position:fixed;
+    bottom:0;left:0;right:0;
+    background:#fff;
+    border-top:1px solid var(--garis);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    display:flex;
+    gap:8px;
+    max-width:640px;
+    margin:0 auto;
+    box-shadow:0 -6px 18px rgba(0,0,0,0.05);
+  }
+  button{
+    font-family:inherit;
+    border:none;
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:0.88rem;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn-primary{
+    flex:1;
+    background:var(--hijau-tua);
+    color:#fff;
+  }
+  .btn-primary:active{background:var(--hijau);}
+  .btn-secondary{
+    background:var(--hijau-muda);
+    color:var(--hijau-tua);
+  }
+
+  .toast{
+    position:fixed;
+    top:14px;left:50%;
+    transform:translateX(-50%) translateY(-20px);
+    background:var(--hijau-tua);
+    color:#fff;
+    padding:10px 16px;
+    border-radius:10px;
+    font-size:0.85rem;
+    opacity:0;
+    transition:all .25s;
+    pointer-events:none;
+    z-index:50;
+    max-width:90%;
+    text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .list-card{
+    background:var(--kartu);
+    border:1px solid var(--garis);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .list-card h2{font-size:0.95rem;margin:0 0 10px;color:var(--hijau-tua);}
+  .entry{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 4px;
+    border-bottom:1px solid var(--garis);
+    font-size:0.85rem;
+  }
+  .entry:last-child{border-bottom:none;}
+  .entry .meta{color:var(--teks-muted);font-size:0.76rem;}
+  .entry .del{
+    background:none;
+    border:none;
+    color:var(--merah);
+    font-size:0.78rem;
+    font-weight:600;
+    padding:4px 8px;
+  }
+  .empty-note{
+    font-size:0.82rem;
+    color:var(--teks-muted);
+    text-align:center;
+    padding:10px 0;
+  }
+  .csv-row{display:flex;gap:8px;margin-top:10px;}
+  .csv-row button{flex:1;font-size:0.8rem;padding:10px;}
+  .btn-outline{background:#fff;border:1px solid var(--hijau);color:var(--hijau-tua);}
+  input[type=file]{display:none;}
+
+  .required-mark{color:var(--emas);}
+
+  .photo-add-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    width:100%;
+    border:1.5px dashed var(--hijau);
+    background:var(--hijau-muda);
+    color:var(--hijau-tua);
+    border-radius:10px;
+    padding:14px;
+    font-size:0.88rem;
+    font-weight:600;
+  }
+  .photo-hint{
+    font-size:0.74rem;
+    color:var(--teks-muted);
+    margin:6px 0 0;
+  }
+  .thumbs{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin-top:10px;
+  }
+  .thumb{
+    position:relative;
+    aspect-ratio:1/1;
+    border-radius:9px;
+    overflow:hidden;
+    border:1px solid var(--garis);
+  }
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .thumb .rm{
+    position:absolute;top:3px;right:3px;
+    width:22px;height:22px;
+    border-radius:50%;
+    background:rgba(30,36,30,0.7);
+    color:#fff;
+    border:none;
+    font-size:0.85rem;
+    line-height:1;
+    padding:0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="eyebrow">PT Riset Perkebunan Nusantara · Rekomendasi Pemupukan</span>
+  <h1>Form Visualisasi Lapangan</h1>
+  <p>Kelapa sawit — isi per blok, simpan offline, export ke CSV</p>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2><span class="num">01</span>Informasi Kebun</h2>
+    <div class="field">
+      <label class="text-label">Kebun <span class="required-mark">*</span></label>
+      <input type="text" id="f_kebun" placeholder="mis. Betung">
+    </div>
+    <div class="field">
+      <label class="text-label">Afdeling <span class="required-mark">*</span></label>
+      <input type="text" id="f_afd" placeholder="mis. Afd II">
+    </div>
+    <div class="field">
+      <label class="text-label">Blok <span class="required-mark">*</span></label>
+      <input type="text" id="f_blok" placeholder="mis. B12">
+    </div>
+    <div class="field">
+      <label class="text-label">Tahun Tanam <span class="required-mark">*</span></label>
+      <input type="text" id="f_tt" placeholder="mis. 2008">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">02</span>Visualisasi Lapangan</h2>
+    <p class="sub">Ketuk salah satu opsi pada tiap kategori.</p>
+
+    <div class="section-block" id="g_situasi_lahan">
+      <p class="group-title">Situasi Lahan</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block" id="g_cadangan_buah">
+      <p class="group-title">Cadangan Buah</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block" id="g_pertumbuhan_tanaman">
+      <p class="group-title">Pertumbuhan Tanaman</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block" id="g_mutu_panen">
+      <p class="group-title">Mutu Panen</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block" id="g_keragaman">
+      <p class="group-title">Keragaman</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block field">
+      <label class="text-label">Defisiensi Hara</label>
+      <textarea id="f_defisiensi" placeholder="mis. gejala kuning N pada pelepah bawah, blok TT 2008"></textarea>
+    </div>
+
+    <div class="section-block" id="g_tunasan">
+      <p class="group-title">Tunasan</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block" id="g_kondisi_piringan">
+      <p class="group-title">Kondisi Piringan</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block" id="g_kondisi_gawangan">
+      <p class="group-title">Kondisi Gawangan</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block field">
+      <label class="text-label">Hama</label>
+      <textarea id="f_hama" placeholder="mis. serangan tikus ringan pada afd II"></textarea>
+    </div>
+
+    <div class="section-block field">
+      <label class="text-label">Penyakit</label>
+      <textarea id="f_penyakit" placeholder="mis. indikasi Ganoderma boninense, 5 pokok"></textarea>
+    </div>
+
+    <div class="section-block field">
+      <label class="text-label">Foto Lapangan</label>
+      <label class="photo-add-btn">
+        📷 Ambil / Pilih Foto
+        <input type="file" id="fotoInput" accept="image/*" capture="environment" multiple style="display:none;">
+      </label>
+      <p class="photo-hint">Foto otomatis dikompres agar file CSV tidak terlalu besar. Bisa pilih beberapa sekaligus.</p>
+      <div class="thumbs" id="thumbs"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">03</span>PT/A &amp; Infrastruktur</h2>
+
+    <div class="section-block" id="g_pta_teras" style="margin-top:0;padding-top:0;border-top:none;">
+      <p class="group-title">PT/A Teras</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block" id="g_pta_tapak">
+      <p class="group-title">PT/A Tapak Kuda</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block" id="g_pta_drainase">
+      <p class="group-title">PT/A Drainase</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block" id="g_pta_water">
+      <p class="group-title">PT/A Water Saving</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block" id="g_jalan">
+      <p class="group-title">Kondisi Jalan</p>
+      <div class="options"></div>
+    </div>
+
+    <div class="section-block field">
+      <label class="text-label">Rotasi Panen</label>
+      <input type="text" id="f_rotasi" placeholder="mis. 7/7">
+    </div>
+
+    <div class="section-block field">
+      <label class="text-label">Catatan</label>
+      <textarea id="f_catatan" placeholder="catatan tambahan lapangan"></textarea>
+    </div>
+  </div>
+
+  <div class="list-card">
+    <h2>Blok Tersimpan (<span id="count">0</span>)</h2>
+    <div id="entryList"><p class="empty-note">Belum ada blok yang disimpan.</p></div>
+    <div class="csv-row">
+      <button class="btn-outline" id="btnImport">Import CSV</button>
+      <button class="btn-outline" id="btnExport">Export CSV</button>
+    </div>
+    <input type="file" id="fileImport" accept=".csv">
+  </div>
+
+</main>
+
+<div class="bar">
+  <button class="btn-secondary" id="btnReset">Bersihkan Form</button>
+  <button class="btn-primary" id="btnSave">Simpan Blok Ini</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const GROUPS = {
+  situasi_lahan: { title:"Situasi Lahan", options:[
+    ["A","Datar"],["B","Bergelombang"],["C","Berbukit"] ]},
+  cadangan_buah: { title:"Cadangan Buah", options:[
+    ["A","Sedikit"],["B","Sedang"],["C","Banyak"] ]},
+  pertumbuhan_tanaman: { title:"Pertumbuhan Tanaman", options:[
+    ["A","Jagur"],["B","Agak Jagur"],["C","Kurus"],["D","Tertekan"] ]},
+  mutu_panen: { title:"Mutu Panen", options:[
+    ["A","Baik"],["B","Cukup"],["C","Buruk"] ]},
+  keragaman: { title:"Keragaman", options:[
+    ["A","Homogen"],["B","Heterogen"] ]},
+  tunasan: { title:"Tunasan", options:[
+    ["A","Standar, namun beberapa overpruning"],
+    ["B","Standar, namun beberapa overpruning (patah pelepah)"],
+    ["C","Standar, namun beberapa melebihi standar"],
+    ["D","Hampir semua over pruning"],
+    ["E","Hampir semua over pruning (patah pelepah)"],
+    ["F","Hampir semua melebihi standar"] ]},
+  kondisi_piringan: { title:"Kondisi Piringan", options:[
+    ["A","Standar"],["B","Kotor"] ]},
+  kondisi_gawangan: { title:"Kondisi Gawangan", options:[
+    ["A","Standar (pelepah disusun rapi, pengendalian gulma selektif)"],
+    ["B","Blanked 1 (pelepah disusun rapi, pengendalian gulma blanked)"],
+    ["C","Blanked 2 (pelepah tidak disusun, pengendalian gulma blanked)"] ]},
+  pta_teras: { title:"PT/A Teras", options:[
+    ["A","Terasan standar"],["B","Terasan tidak standar dan perlu direhab"] ]},
+  pta_tapak: { title:"PT/A Tapak Kuda", options:[
+    ["A","Tapak kuda standar"],["B","Tapak kuda tidak standar perlu direhab"] ]},
+  pta_drainase: { title:"PT/A Drainase", options:[
+    ["A","Drainase Standar"],["B","Drainase tidak standar dan perlu direhab"] ]},
+  pta_water: { title:"PT/A Water Saving", options:[
+    ["A","Terdapat Rorak"],["B","Terdapat Guludan"] ]},
+  jalan: { title:"Kondisi Jalan", options:[
+    ["A","Baik"],["B","Perlu rehabilitasi"] ]},
+};
+
+const state = {}; // selected letter per group key
+
+function buildGroups(){
+  const idMap = {
+    situasi_lahan:"g_situasi_lahan", cadangan_buah:"g_cadangan_buah",
+    pertumbuhan_tanaman:"g_pertumbuhan_tanaman", mutu_panen:"g_mutu_panen",
+    keragaman:"g_keragaman", tunasan:"g_tunasan",
+    kondisi_piringan:"g_kondisi_piringan", kondisi_gawangan:"g_kondisi_gawangan",
+    pta_teras:"g_pta_teras", pta_tapak:"g_pta_tapak", pta_drainase:"g_pta_drainase",
+    pta_water:"g_pta_water", jalan:"g_jalan"
+  };
+  Object.keys(GROUPS).forEach(key=>{
+    const container = document.querySelector('#'+idMap[key]+' .options');
+    GROUPS[key].options.forEach(([letter,desc])=>{
+      const label = document.createElement('label');
+      label.className='opt';
+      label.dataset.group=key;
+      label.dataset.letter=letter;
+      label.innerHTML = `<input type="radio" name="${key}">
+        <span class="letter">${letter}</span>
+        <span class="desc">${desc}</span>`;
+      label.addEventListener('click', ()=>selectOption(key,letter));
+      container.appendChild(label);
+    });
+  });
+}
+
+function selectOption(key,letter){
+  state[key]=letter;
+  document.querySelectorAll(`.opt[data-group="${key}"]`).forEach(el=>{
+    el.classList.toggle('selected', el.dataset.letter===letter);
+  });
+}
+
+buildGroups();
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1700);
+}
+
+function groupText(key){
+  const letter = state[key];
+  if(!letter) return "";
+  const opt = GROUPS[key].options.find(o=>o[0]===letter);
+  return letter+" - "+opt[1];
+}
+
+const FIELD_COLS = [
+  "kebun","afd","blok","tahun_tanam",
+  "situasi_lahan","cadangan_buah","pertumbuhan_tanaman","mutu_panen","keragaman",
+  "defisiensi_hara","tunasan","kondisi_piringan","kondisi_gawangan","hama","penyakit",
+  "pta_teras","pta_tapak","pta_drainase","pta_water","jalan","rotasi_panen","catatan","foto"
+];
+
+let entries = [];
+let currentPhotos = []; // array of base64 dataURI strings for the block being filled
+
+const MAX_DIM = 1400;      // px, longest side after resize
+const JPEG_QUALITY = 0.72;
+
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if(w > h && w > MAX_DIM){ h = Math.round(h*MAX_DIM/w); w = MAX_DIM; }
+        else if(h > MAX_DIM){ w = Math.round(w*MAX_DIM/h); h = MAX_DIM; }
+        const canvas = document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderThumbs(){
+  const wrap = document.getElementById('thumbs');
+  wrap.innerHTML='';
+  currentPhotos.forEach((src,i)=>{
+    const div=document.createElement('div');
+    div.className='thumb';
+    div.innerHTML = `<img src="${src}"><button class="rm" data-i="${i}">×</button>`;
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll('.rm').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      currentPhotos.splice(parseInt(btn.dataset.i),1);
+      renderThumbs();
+    });
+  });
+}
+
+document.getElementById('fotoInput').addEventListener('change', async function(){
+  const files = Array.from(this.files);
+  for(const f of files){
+    try{
+      const dataUri = await compressImage(f);
+      currentPhotos.push(dataUri);
+    }catch(e){ /* skip file that failed to load */ }
+  }
+  renderThumbs();
+  this.value='';
+});
+
+function collectEntry(){
+  return {
+    kebun: document.getElementById('f_kebun').value.trim(),
+    afd: document.getElementById('f_afd').value.trim(),
+    blok: document.getElementById('f_blok').value.trim(),
+    tahun_tanam: document.getElementById('f_tt').value.trim(),
+    situasi_lahan: groupText('situasi_lahan'),
+    cadangan_buah: groupText('cadangan_buah'),
+    pertumbuhan_tanaman: groupText('pertumbuhan_tanaman'),
+    mutu_panen: groupText('mutu_panen'),
+    keragaman: groupText('keragaman'),
+    defisiensi_hara: document.getElementById('f_defisiensi').value.trim(),
+    tunasan: groupText('tunasan'),
+    kondisi_piringan: groupText('kondisi_piringan'),
+    kondisi_gawangan: groupText('kondisi_gawangan'),
+    hama: document.getElementById('f_hama').value.trim(),
+    penyakit: document.getElementById('f_penyakit').value.trim(),
+    pta_teras: groupText('pta_teras'),
+    pta_tapak: groupText('pta_tapak'),
+    pta_drainase: groupText('pta_drainase'),
+    pta_water: groupText('pta_water'),
+    jalan: groupText('jalan'),
+    rotasi_panen: document.getElementById('f_rotasi').value.trim(),
+    catatan: document.getElementById('f_catatan').value.trim(),
+    foto: currentPhotos.join(';'),
+  };
+}
+
+function renderList(){
+  const list = document.getElementById('entryList');
+  document.getElementById('count').textContent = entries.length;
+  if(entries.length===0){
+    list.innerHTML = '<p class="empty-note">Belum ada blok yang disimpan.</p>';
+    return;
+  }
+  list.innerHTML='';
+  entries.forEach((e,i)=>{
+    const row=document.createElement('div');
+    row.className='entry';
+    const fotoCount = e.foto ? e.foto.split(';').filter(Boolean).length : 0;
+    row.innerHTML = `<div>
+        <div><strong>${e.blok||'(blok?)'}</strong> — ${e.kebun||''} ${e.afd||''}</div>
+        <div class="meta">TT ${e.tahun_tanam||'-'}${fotoCount? ' · 📷 '+fotoCount+' foto':''}</div>
+      </div>
+      <button class="del" data-i="${i}">Hapus</button>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      entries.splice(parseInt(btn.dataset.i),1);
+      renderList();
+    });
+  });
+}
+
+function resetForm(){
+  document.getElementById('f_kebun').value='';
+  document.getElementById('f_afd').value='';
+  document.getElementById('f_blok').value='';
+  document.getElementById('f_tt').value='';
+  document.getElementById('f_defisiensi').value='';
+  document.getElementById('f_hama').value='';
+  document.getElementById('f_penyakit').value='';
+  document.getElementById('f_rotasi').value='';
+  document.getElementById('f_catatan').value='';
+  Object.keys(state).forEach(k=>delete state[k]);
+  document.querySelectorAll('.opt.selected').forEach(el=>el.classList.remove('selected'));
+  currentPhotos = [];
+  renderThumbs();
+}
+
+document.getElementById('btnSave').addEventListener('click',()=>{
+  const e = collectEntry();
+  if(!e.kebun || !e.afd || !e.blok || !e.tahun_tanam){
+    showToast('Isi dulu Kebun, Afd, Blok, dan Tahun Tanam');
+    return;
+  }
+  entries.push(e);
+  renderList();
+  const fc = currentPhotos.length;
+  showToast('Blok '+e.blok+' disimpan'+(fc? ' ('+fc+' foto)':''));
+  resetForm();
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+document.getElementById('btnReset').addEventListener('click',()=>{
+  resetForm();
+  showToast('Form dikosongkan');
+});
+
+function csvEscape(v){
+  v = (v===undefined||v===null) ? "" : String(v);
+  if(/[",\n]/.test(v)){
+    v = '"'+v.replace(/"/g,'""')+'"';
+  }
+  return v;
+}
+
+document.getElementById('btnExport').addEventListener('click',()=>{
+  if(entries.length===0){ showToast('Belum ada data untuk diexport'); return; }
+  const rows = [FIELD_COLS.join(',')];
+  entries.forEach(e=>{
+    rows.push(FIELD_COLS.map(c=>csvEscape(e[c])).join(','));
+  });
+  const csv = rows.join('\n');
+  const blob = new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href=url;
+  a.download = 'visualisasi_lapangan_'+stamp+'.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+function parseCSV(text){
+  const rows=[];
+  let row=[], field='', inQuotes=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQuotes){
+      if(c==='"'){
+        if(text[i+1]==='"'){ field+='"'; i++; }
+        else inQuotes=false;
+      } else field+=c;
+    } else {
+      if(c==='"') inQuotes=true;
+      else if(c===','){ row.push(field); field=''; }
+      else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else if(c==='\r'){}
+      else field+=c;
+    }
+  }
+  if(field.length>0 || row.length>0){ row.push(field); rows.push(row); }
+  return rows.filter(r=>r.length>1 || r[0]!=='');
+}
+
+document.getElementById('btnImport').addEventListener('click',()=>{
+  document.getElementById('fileImport').click();
+});
+document.getElementById('fileImport').addEventListener('change', function(){
+  const file=this.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    let text = ev.target.result;
+    if(text.charCodeAt(0)===0xFEFF) text = text.slice(1);
+    const rows = parseCSV(text);
+    if(rows.length<2){ showToast('File CSV kosong atau tidak valid'); return; }
+    const header = rows[0];
+    let added=0;
+    for(let i=1;i<rows.length;i++){
+      const r = rows[i];
+      const obj={};
+      header.forEach((h,idx)=>{ obj[h.trim()] = r[idx]!==undefined ? r[idx] : ''; });
+      if(obj.blok || obj.kebun){ entries.push(obj); added++; }
+    }
+    renderList();
+    showToast(added+' blok ditambahkan dari file');
+  };
+  reader.readAsText(file, 'UTF-8');
+  this.value='';
+});
+</script>
+</body>
+</html>
