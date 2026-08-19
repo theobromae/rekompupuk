@@ -276,40 +276,42 @@
 
   .required-mark{color:var(--emas);}
 
-  .photo-add-btn{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-    width:100%;
-    border:1.5px dashed var(--hijau);
-    background:var(--hijau-muda);
-    color:var(--hijau-tua);
-    border-radius:10px;
-    padding:14px;
-    font-size:0.88rem;
-    font-weight:600;
-  }
   .photo-hint{
     font-size:0.74rem;
     color:var(--teks-muted);
     margin:6px 0 0;
   }
-  .thumbs{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:8px;
+  .mini-photo{
     margin-top:10px;
   }
-  .thumb{
+  .mini-photo-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    width:100%;
+    border:1.5px dashed var(--hijau);
+    background:var(--hijau-muda);
+    color:var(--hijau-tua);
+    border-radius:9px;
+    padding:9px;
+    font-size:0.78rem;
+    font-weight:600;
+  }
+  .mini-thumb{
     position:relative;
-    aspect-ratio:1/1;
+    margin-top:8px;
+    width:100%;
+    max-width:160px;
+    aspect-ratio:4/3;
     border-radius:9px;
     overflow:hidden;
     border:1px solid var(--garis);
+    display:none;
   }
-  .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
-  .thumb .rm{
+  .mini-thumb.show{display:block;}
+  .mini-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .mini-thumb .rm{
     position:absolute;top:3px;right:3px;
     width:22px;height:22px;
     border-radius:50%;
@@ -327,7 +329,7 @@
 <header>
   <span class="eyebrow">PT Riset Perkebunan Nusantara · Rekomendasi Pemupukan</span>
   <h1>Form Visualisasi Lapangan</h1>
-  <p>Kelapa sawit — isi per blok, simpan offline, export ke CSV</p>
+  <p>Kelapa sawit — isi per blok + foto tiap kondisi, export ke ZIP (CSV + foto)</p>
 </header>
 
 <main>
@@ -410,16 +412,7 @@
       <label class="text-label">Penyakit</label>
       <textarea id="f_penyakit" placeholder="mis. indikasi Ganoderma boninense, 5 pokok"></textarea>
     </div>
-
-    <div class="section-block field">
-      <label class="text-label">Foto Lapangan</label>
-      <label class="photo-add-btn">
-        📷 Ambil / Pilih Foto
-        <input type="file" id="fotoInput" accept="image/*" capture="environment" multiple style="display:none;">
-      </label>
-      <p class="photo-hint">Foto otomatis dikompres agar file CSV tidak terlalu besar. Bisa pilih beberapa sekaligus.</p>
-      <div class="thumbs" id="thumbs"></div>
-    </div>
+    <p class="photo-hint">💡 Foto untuk tiap kondisi (Situasi Lahan, Cadangan Buah, dst) bisa dilampirkan langsung di bawah masing-masing pilihan di atas.</p>
   </div>
 
   <div class="card">
@@ -466,8 +459,9 @@
     <div id="entryList"><p class="empty-note">Belum ada blok yang disimpan.</p></div>
     <div class="csv-row">
       <button class="btn-outline" id="btnImport">Import CSV</button>
-      <button class="btn-outline" id="btnExport">Export CSV</button>
+      <button class="btn-outline" id="btnExport">Export ZIP (CSV+Foto)</button>
     </div>
+    <p class="photo-hint">Import CSV hanya memuat kembali data teks; foto perlu dilampirkan ulang kalau melanjutkan sesi di file CSV lama.</p>
     <input type="file" id="fileImport" accept=".csv">
   </div>
 
@@ -518,6 +512,12 @@ const GROUPS = {
 };
 
 const state = {}; // selected letter per group key
+const groupPhotos = {}; // dataURI per kategori (untuk blok yang sedang diisi)
+const PHOTO_GROUPS = [
+  "situasi_lahan","cadangan_buah","pertumbuhan_tanaman","tunasan",
+  "kondisi_piringan","kondisi_gawangan",
+  "pta_teras","pta_tapak","pta_drainase","pta_water","jalan"
+];
 
 function buildGroups(){
   const idMap = {
@@ -541,6 +541,42 @@ function buildGroups(){
       label.addEventListener('click', ()=>selectOption(key,letter));
       container.appendChild(label);
     });
+    if(PHOTO_GROUPS.includes(key)){
+      const parent = document.getElementById(idMap[key]);
+      const wrap = document.createElement('div');
+      wrap.className='mini-photo';
+      wrap.id='mp_'+key;
+      wrap.innerHTML = `
+        <input type="file" id="mp_input_${key}" accept="image/*" capture="environment" style="display:none;">
+        <button type="button" class="mini-photo-btn" data-key="${key}">📷 Tambah foto ${GROUPS[key].title.toLowerCase()}</button>
+        <div class="mini-thumb" id="mp_thumb_${key}"><img><button class="rm" type="button">×</button></div>`;
+      parent.appendChild(wrap);
+
+      const input = wrap.querySelector('input[type=file]');
+      const btn = wrap.querySelector('.mini-photo-btn');
+      const thumb = wrap.querySelector('.mini-thumb');
+      const img = thumb.querySelector('img');
+      const rm = thumb.querySelector('.rm');
+
+      btn.addEventListener('click', ()=> input.click());
+      input.addEventListener('change', async function(){
+        const file = this.files[0];
+        if(!file) return;
+        try{
+          const dataUri = await compressImage(file);
+          groupPhotos[key] = dataUri;
+          img.src = dataUri;
+          thumb.classList.add('show');
+          btn.textContent = '📷 Ganti foto '+GROUPS[key].title.toLowerCase();
+        }catch(e){ showToast('Gagal memuat foto'); }
+        this.value='';
+      });
+      rm.addEventListener('click', ()=>{
+        delete groupPhotos[key];
+        thumb.classList.remove('show');
+        btn.textContent = '📷 Tambah foto '+GROUPS[key].title.toLowerCase();
+      });
+    }
   });
 }
 
@@ -569,13 +605,23 @@ function groupText(key){
 
 const FIELD_COLS = [
   "kebun","afd","blok","tahun_tanam",
-  "situasi_lahan","cadangan_buah","pertumbuhan_tanaman","mutu_panen","keragaman",
-  "defisiensi_hara","tunasan","kondisi_piringan","kondisi_gawangan","hama","penyakit",
-  "pta_teras","pta_tapak","pta_drainase","pta_water","jalan","rotasi_panen","catatan","foto"
+  "situasi_lahan","foto_situasi_lahan",
+  "cadangan_buah","foto_cadangan_buah",
+  "pertumbuhan_tanaman","foto_pertumbuhan_tanaman",
+  "mutu_panen","keragaman",
+  "defisiensi_hara","hama","penyakit",
+  "tunasan","foto_tunasan",
+  "kondisi_piringan","foto_kondisi_piringan",
+  "kondisi_gawangan","foto_kondisi_gawangan",
+  "pta_teras","foto_pta_teras",
+  "pta_tapak","foto_pta_tapak",
+  "pta_drainase","foto_pta_drainase",
+  "pta_water","foto_pta_water",
+  "jalan","foto_jalan",
+  "rotasi_panen","catatan"
 ];
 
 let entries = [];
-let currentPhotos = []; // array of base64 dataURI strings for the block being filled
 
 const MAX_DIM = 1400;      // px, longest side after resize
 const JPEG_QUALITY = 0.72;
@@ -602,35 +648,6 @@ function compressImage(file){
   });
 }
 
-function renderThumbs(){
-  const wrap = document.getElementById('thumbs');
-  wrap.innerHTML='';
-  currentPhotos.forEach((src,i)=>{
-    const div=document.createElement('div');
-    div.className='thumb';
-    div.innerHTML = `<img src="${src}"><button class="rm" data-i="${i}">×</button>`;
-    wrap.appendChild(div);
-  });
-  wrap.querySelectorAll('.rm').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      currentPhotos.splice(parseInt(btn.dataset.i),1);
-      renderThumbs();
-    });
-  });
-}
-
-document.getElementById('fotoInput').addEventListener('change', async function(){
-  const files = Array.from(this.files);
-  for(const f of files){
-    try{
-      const dataUri = await compressImage(f);
-      currentPhotos.push(dataUri);
-    }catch(e){ /* skip file that failed to load */ }
-  }
-  renderThumbs();
-  this.value='';
-});
-
 function collectEntry(){
   return {
     kebun: document.getElementById('f_kebun').value.trim(),
@@ -655,7 +672,7 @@ function collectEntry(){
     jalan: groupText('jalan'),
     rotasi_panen: document.getElementById('f_rotasi').value.trim(),
     catatan: document.getElementById('f_catatan').value.trim(),
-    foto: currentPhotos.join(';'),
+    _photos: Object.assign({}, groupPhotos),
   };
 }
 
@@ -670,7 +687,7 @@ function renderList(){
   entries.forEach((e,i)=>{
     const row=document.createElement('div');
     row.className='entry';
-    const fotoCount = e.foto ? e.foto.split(';').filter(Boolean).length : 0;
+    const fotoCount = e._photos ? Object.keys(e._photos).length : 0;
     row.innerHTML = `<div>
         <div><strong>${e.blok||'(blok?)'}</strong> — ${e.kebun||''} ${e.afd||''}</div>
         <div class="meta">TT ${e.tahun_tanam||'-'}${fotoCount? ' · 📷 '+fotoCount+' foto':''}</div>
@@ -698,8 +715,13 @@ function resetForm(){
   document.getElementById('f_catatan').value='';
   Object.keys(state).forEach(k=>delete state[k]);
   document.querySelectorAll('.opt.selected').forEach(el=>el.classList.remove('selected'));
-  currentPhotos = [];
-  renderThumbs();
+  Object.keys(groupPhotos).forEach(k=>delete groupPhotos[k]);
+  PHOTO_GROUPS.forEach(key=>{
+    const thumb = document.getElementById('mp_thumb_'+key);
+    const btn = document.querySelector('#mp_'+key+' .mini-photo-btn');
+    if(thumb) thumb.classList.remove('show');
+    if(btn) btn.textContent = '📷 Tambah foto '+GROUPS[key].title.toLowerCase();
+  });
 }
 
 document.getElementById('btnSave').addEventListener('click',()=>{
@@ -710,7 +732,7 @@ document.getElementById('btnSave').addEventListener('click',()=>{
   }
   entries.push(e);
   renderList();
-  const fc = currentPhotos.length;
+  const fc = Object.keys(e._photos||{}).length;
   showToast('Blok '+e.blok+' disimpan'+(fc? ' ('+fc+' foto)':''));
   resetForm();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -729,19 +751,95 @@ function csvEscape(v){
   return v;
 }
 
+function sanitizeName(s){
+  return String(s||'blok').trim().replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'') || 'blok';
+}
+
+function dataUriToBytes(dataUri){
+  const base64 = dataUri.split(',')[1] || '';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+// --- Minimal ZIP writer (store method, no compression) ---
+let _crcTable = null;
+function crc32(bytes){
+  if(!_crcTable){
+    _crcTable = [];
+    for(let n=0;n<256;n++){
+      let c=n;
+      for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
+      _crcTable[n] = c>>>0;
+    }
+  }
+  let crc = 0 ^ (-1);
+  for(let i=0;i<bytes.length;i++) crc = (crc>>>8) ^ _crcTable[(crc ^ bytes[i]) & 0xFF];
+  return (crc ^ (-1)) >>> 0;
+}
+function u16(n){ return new Uint8Array([n&0xFF, (n>>8)&0xFF]); }
+function u32(n){ return new Uint8Array([n&0xFF, (n>>8)&0xFF, (n>>16)&0xFF, (n>>24)&0xFF]); }
+
+function buildZip(files){
+  const localChunks=[], centralChunks=[];
+  let offset=0;
+  const enc = new TextEncoder();
+  files.forEach(f=>{
+    const nameBytes = enc.encode(f.name);
+    const crc = crc32(f.data);
+    const size = f.data.length;
+    const localParts = [ u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0),
+      u32(crc), u32(size), u32(size), u16(nameBytes.length), u16(0), nameBytes ];
+    const localLen = localParts.reduce((a,c)=>a+c.length,0);
+    localChunks.push(...localParts, f.data);
+
+    const centralParts = [ u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0),
+      u32(crc), u32(size), u32(size), u16(nameBytes.length), u16(0), u16(0), u16(0), u16(0),
+      u32(0), u32(offset), nameBytes ];
+    centralChunks.push(...centralParts);
+    offset += localLen + size;
+  });
+  const centralSize = centralChunks.reduce((a,c)=>a+c.length,0);
+  const endParts = [ u32(0x06054b50), u16(0), u16(0), u16(files.length), u16(files.length),
+    u32(centralSize), u32(offset), u16(0) ];
+  return new Blob([...localChunks, ...centralChunks, ...endParts], {type:'application/zip'});
+}
+
 document.getElementById('btnExport').addEventListener('click',()=>{
   if(entries.length===0){ showToast('Belum ada data untuk diexport'); return; }
+
   const rows = [FIELD_COLS.join(',')];
-  entries.forEach(e=>{
-    rows.push(FIELD_COLS.map(c=>csvEscape(e[c])).join(','));
+  const zipFiles = [];
+
+  entries.forEach((e,i)=>{
+    const folder = (i+1)+'_'+sanitizeName(e.kebun)+'_'+sanitizeName(e.blok);
+    const rowObj = Object.assign({}, e);
+    PHOTO_GROUPS.forEach(key=>{
+      const photo = e._photos && e._photos[key];
+      if(photo){
+        const path = 'images/'+folder+'/'+key+'.jpg';
+        try{
+          zipFiles.push({ name: path, data: dataUriToBytes(photo) });
+          rowObj['foto_'+key] = path;
+        }catch(err){ rowObj['foto_'+key] = ''; }
+      } else {
+        rowObj['foto_'+key] = '';
+      }
+    });
+    rows.push(FIELD_COLS.map(c=>csvEscape(rowObj[c])).join(','));
   });
+
   const csv = rows.join('\n');
-  const blob = new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
+  const enc = new TextEncoder();
+  zipFiles.push({ name:'data.csv', data: enc.encode('\uFEFF'+csv) });
+
+  const zipBlob = buildZip(zipFiles);
+  const url = URL.createObjectURL(zipBlob);
   const a = document.createElement('a');
   const stamp = new Date().toISOString().slice(0,10);
-  a.href=url;
-  a.download = 'visualisasi_lapangan_'+stamp+'.csv';
+  a.href = url;
+  a.download = 'visualisasi_lapangan_'+stamp+'.zip';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
