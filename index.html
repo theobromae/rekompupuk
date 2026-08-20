@@ -461,7 +461,10 @@
       <button class="btn-outline" id="btnImport">Import CSV</button>
       <button class="btn-outline" id="btnExport">Export ZIP (CSV+Foto)</button>
     </div>
-    <p class="photo-hint">Import CSV hanya memuat kembali data teks; foto perlu dilampirkan ulang kalau melanjutkan sesi di file CSV lama.</p>
+    <div class="csv-row">
+      <button class="btn-outline" id="btnClearAll" style="border-color:var(--merah);color:var(--merah);">Hapus Semua Data Tersimpan</button>
+    </div>
+    <p class="photo-hint">Data blok kini otomatis tersimpan permanen di HP (aman walau app ditutup/di-restart). Import CSV hanya memuat kembali data teks; foto perlu dilampirkan ulang kalau melanjutkan sesi di file CSV lama.</p>
     <input type="file" id="fileImport" accept=".csv">
   </div>
 
@@ -699,6 +702,7 @@ function renderList(){
     btn.addEventListener('click',()=>{
       entries.splice(parseInt(btn.dataset.i),1);
       renderList();
+      saveEntriesToDB();
     });
   });
 }
@@ -724,6 +728,38 @@ function resetForm(){
   });
 }
 
+// --- Penyimpanan permanen (IndexedDB) supaya data tidak hilang kalau app di-background/di-kill ---
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open('rekompupukDB', 1);
+    req.onupgradeneeded = ()=>{ req.result.createObjectStore('kv'); };
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function saveEntriesToDB(){
+  try{
+    const db = await openDB();
+    const tx = db.transaction('kv','readwrite');
+    tx.objectStore('kv').put(JSON.stringify(entries), 'entries_v1');
+    return new Promise(res=>{ tx.oncomplete=()=>res(true); tx.onerror=()=>res(false); });
+  }catch(e){ return false; }
+}
+async function loadEntriesFromDB(){
+  try{
+    const db = await openDB();
+    const tx = db.transaction('kv','readonly');
+    const req = tx.objectStore('kv').get('entries_v1');
+    return new Promise(res=>{
+      req.onsuccess = ()=>{
+        if(req.result){ try{ entries = JSON.parse(req.result); }catch(e){ entries=[]; } }
+        res();
+      };
+      req.onerror = ()=>res();
+    });
+  }catch(e){}
+}
+
 document.getElementById('btnSave').addEventListener('click',()=>{
   const e = collectEntry();
   if(!e.kebun || !e.afd || !e.blok || !e.tahun_tanam){
@@ -732,10 +768,18 @@ document.getElementById('btnSave').addEventListener('click',()=>{
   }
   entries.push(e);
   renderList();
+  saveEntriesToDB();
   const fc = Object.keys(e._photos||{}).length;
   showToast('Blok '+e.blok+' disimpan'+(fc? ' ('+fc+' foto)':''));
   resetForm();
   window.scrollTo({top:0,behavior:'smooth'});
+});
+
+loadEntriesFromDB().then(()=>{
+  renderList();
+  if(entries.length>0){
+    showToast(entries.length+' blok tersimpan dipulihkan');
+  }
 });
 
 document.getElementById('btnReset').addEventListener('click',()=>{
@@ -868,6 +912,16 @@ function parseCSV(text){
   return rows.filter(r=>r.length>1 || r[0]!=='');
 }
 
+document.getElementById('btnClearAll').addEventListener('click',()=>{
+  if(entries.length===0){ showToast('Tidak ada data tersimpan'); return; }
+  if(confirm('Hapus semua ('+entries.length+') blok tersimpan? Pastikan sudah export ZIP dulu.')){
+    entries = [];
+    renderList();
+    saveEntriesToDB();
+    showToast('Semua data tersimpan dihapus');
+  }
+});
+
 document.getElementById('btnImport').addEventListener('click',()=>{
   document.getElementById('fileImport').click();
 });
@@ -889,6 +943,7 @@ document.getElementById('fileImport').addEventListener('change', function(){
       if(obj.blok || obj.kebun){ entries.push(obj); added++; }
     }
     renderList();
+    saveEntriesToDB();
     showToast(added+' blok ditambahkan dari file');
   };
   reader.readAsText(file, 'UTF-8');
