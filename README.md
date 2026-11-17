@@ -10,8 +10,13 @@ Laporan Rekomendasi Pemupukan Tanaman Kelapa Sawit.
 - Foto lapangan bisa dilampirkan langsung per kategori (Situasi Lahan, Cadangan
   Buah, Pertumbuhan Tanaman, Tunasan, Kondisi Piringan, Kondisi Gawangan, PT/A
   Teras, Tapak Kuda, Drainase, Water Saving, Kondisi Jalan) — otomatis dikompres.
+- **Defisiensi Hara** dan **Hama & Penyakit** dicatat sebagai daftar temuan: tiap
+  temuan berisi satu keterangan dan boleh lebih dari satu foto. Hama & Penyakit
+  memakai dropdown bertingkat (Hama: ulat api, ulat kantong, tikus, kumbang badak;
+  Penyakit: Ganoderma, busuk pupus; plus "Lainnya").
 - Export semua blok jadi satu file **ZIP** berisi `data.csv` (data teks, ringan,
-  gampang dibuka) dan folder `images/` berisi foto asli per blok per kategori.
+  gampang dibuka) dan folder `images/` berisi foto asli per blok per kategori, serta `temuan.csv`
+  (satu baris per temuan defisiensi/hama/penyakit beserta daftar fotonya).
 - Import CSV lama untuk melanjutkan sesi survei data teks di hari lain (foto
   perlu dilampirkan ulang saat lanjut sesi).
 - Bisa di-"Add to Home Screen" di iOS/Android agar terasa seperti aplikasi.

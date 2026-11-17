@@ -300,6 +300,73 @@
   }
   .entry .del{border-radius:7px;}
 
+  .temuan-list{display:flex;flex-direction:column;gap:10px;}
+  .temuan{
+    border:1px solid var(--garis);
+    border-radius:11px;
+    padding:11px;
+    background:#FCFCFA;
+  }
+  .temuan-head{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:8px;
+  }
+  .temuan-head .tag{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:0.72rem;font-weight:700;
+    background:var(--hijau-muda);color:var(--hijau-tua);
+    border-radius:6px;padding:2px 8px;
+  }
+  .temuan-head .rm-temuan{
+    background:none;border:none;color:var(--merah);
+    font-size:0.78rem;font-weight:600;padding:4px 6px;
+  }
+  .temuan select, .temuan textarea{
+    width:100%;
+    border:1px solid var(--garis);
+    border-radius:8px;
+    padding:9px 10px;
+    font-size:0.86rem;
+    font-family:inherit;
+    background:#fff;
+    color:var(--teks);
+    margin-bottom:8px;
+  }
+  .temuan select{
+    -webkit-appearance:none;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--teks-muted) 50%),linear-gradient(135deg,var(--teks-muted) 50%,transparent 50%);
+    background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;
+    background-size:5px 5px,5px 5px;
+    background-repeat:no-repeat;
+  }
+  .temuan select:disabled{color:#A6AFA0;background-color:#F2F3EF;}
+  .temuan textarea{min-height:48px;resize:vertical;}
+  .temuan select:focus, .temuan textarea:focus{outline:none;border-color:var(--hijau);}
+  .temuan-photos{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
+  }
+  .temuan-photos .ph{
+    position:relative;aspect-ratio:1/1;border-radius:8px;overflow:hidden;
+    border:1px solid var(--garis);
+  }
+  .temuan-photos .ph img{width:100%;height:100%;object-fit:cover;display:block;}
+  .temuan-photos .ph .rm{
+    position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;
+    background:rgba(30,36,30,0.7);color:#fff;border:none;font-size:0.85rem;line-height:1;padding:0;
+  }
+  .temuan-photos .ph-add{
+    aspect-ratio:1/1;border-radius:8px;
+    border:1.5px dashed var(--hijau);background:var(--hijau-muda);color:var(--hijau-tua);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:0.72rem;font-weight:600;gap:2px;
+  }
+  .temuan-photos .ph-add span{font-size:1.2rem;line-height:1;}
+  .add-temuan-btn{
+    width:100%;margin-top:10px;
+    background:#fff;border:1px solid var(--hijau);color:var(--hijau-tua);
+    border-radius:10px;padding:11px;font-size:0.84rem;font-weight:600;
+  }
+
   .required-mark{color:var(--emas);}
 
   .photo-hint{
@@ -411,7 +478,9 @@
 
     <div class="section-block field">
       <label class="text-label">Defisiensi Hara</label>
-      <textarea id="f_defisiensi" placeholder="mis. gejala kuning N pada pelepah bawah, blok TT 2008"></textarea>
+      <p class="photo-hint" style="margin:0 0 8px;">Satu temuan = satu keterangan, boleh berisi lebih dari satu foto.</p>
+      <div class="temuan-list" id="list_defisiensi"></div>
+      <button type="button" class="add-temuan-btn" id="add_defisiensi">＋ Tambah temuan defisiensi</button>
     </div>
 
     <div class="section-block" id="g_tunasan">
@@ -430,13 +499,10 @@
     </div>
 
     <div class="section-block field">
-      <label class="text-label">Hama</label>
-      <textarea id="f_hama" placeholder="mis. serangan tikus ringan pada afd II"></textarea>
-    </div>
-
-    <div class="section-block field">
-      <label class="text-label">Penyakit</label>
-      <textarea id="f_penyakit" placeholder="mis. indikasi Ganoderma boninense, 5 pokok"></textarea>
+      <label class="text-label">Hama &amp; Penyakit</label>
+      <p class="photo-hint" style="margin:0 0 8px;">Pilih kategori lalu jenisnya. Satu temuan boleh berisi lebih dari satu foto.</p>
+      <div class="temuan-list" id="list_hp"></div>
+      <button type="button" class="add-temuan-btn" id="add_hp">＋ Tambah temuan hama / penyakit</button>
     </div>
     <p class="photo-hint">💡 Foto untuk tiap kondisi (Situasi Lahan, Cadangan Buah, dst) bisa dilampirkan langsung di bawah masing-masing pilihan di atas.</p>
   </div>
@@ -651,7 +717,8 @@ const FIELD_COLS = [
   "pertumbuhan_tanaman","keterangan_pertumbuhan_tanaman","foto_pertumbuhan_tanaman",
   "mutu_panen","keterangan_mutu_panen",
   "keragaman","keterangan_keragaman",
-  "defisiensi_hara","hama","penyakit",
+  "defisiensi_hara","foto_defisiensi_hara",
+  "hama_penyakit","foto_hama_penyakit",
   "tunasan","keterangan_tunasan","foto_tunasan",
   "kondisi_piringan","keterangan_kondisi_piringan","foto_kondisi_piringan",
   "kondisi_gawangan","keterangan_kondisi_gawangan","foto_kondisi_gawangan",
@@ -690,6 +757,122 @@ function compressImage(file){
   });
 }
 
+// ===== Temuan: Defisiensi Hara & Hama/Penyakit (banyak foto per keterangan) =====
+const HP_JENIS = {
+  "Hama": ["Ulat api","Ulat kantong","Tikus","Kumbang badak","Lainnya"],
+  "Penyakit": ["Ganoderma","Busuk pupus","Lainnya"]
+};
+const temuanState = { defisiensi: [], hp: [] };
+
+function cloneTemuan(arr){
+  return (arr||[]).map(t=>({ tipe:t.tipe||'', jenis:t.jenis||'', ket:t.ket||'', photos:(t.photos||[]).slice() }));
+}
+function escAttr(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function renderTemuan(kind){
+  const list = document.getElementById(kind==='defisiensi' ? 'list_defisiensi' : 'list_hp');
+  const arr = temuanState[kind];
+  list.innerHTML = '';
+  arr.forEach((t,ti)=>{
+    const box = document.createElement('div');
+    box.className = 'temuan';
+    let selects = '';
+    if(kind==='hp'){
+      const jenisOpts = t.tipe ? HP_JENIS[t.tipe] : [];
+      selects = `
+        <select class="sel-tipe">
+          <option value="">— Pilih: Hama atau Penyakit —</option>
+          ${Object.keys(HP_JENIS).map(k=>`<option value="${k}" ${t.tipe===k?'selected':''}>${k}</option>`).join('')}
+        </select>
+        <select class="sel-jenis" ${t.tipe?'':'disabled'}>
+          <option value="">${t.tipe ? '— Pilih jenis '+t.tipe.toLowerCase()+' —' : 'Pilih kategori dulu'}</option>
+          ${jenisOpts.map(j=>`<option value="${j}" ${t.jenis===j?'selected':''}>${j}</option>`).join('')}
+        </select>`;
+    }
+    const placeholder = kind==='defisiensi'
+      ? 'Keterangan, mis. gejala defisiensi N (pelepah bawah menguning)'
+      : 'Keterangan, mis. serangan ringan, ±5 pokok terserang';
+    box.innerHTML = `
+      <div class="temuan-head">
+        <span class="tag">Temuan ${ti+1}</span>
+        <button type="button" class="rm-temuan">Hapus temuan</button>
+      </div>
+      ${selects}
+      <div class="temuan-photos">
+        ${t.photos.map((p,pi)=>`<div class="ph"><img src="${p}"><button type="button" class="rm" data-pi="${pi}">×</button></div>`).join('')}
+        <label class="ph-add"><span>＋</span>Foto
+          <input type="file" accept="image/*" multiple style="display:none;">
+        </label>
+      </div>
+      <textarea class="ta-ket" placeholder="${placeholder}" style="margin:8px 0 0;">${escAttr(t.ket)}</textarea>`;
+    list.appendChild(box);
+
+    box.querySelector('.rm-temuan').addEventListener('click',()=>{
+      if(t.photos.length || t.ket){
+        if(!confirm('Hapus temuan '+(ti+1)+' beserta fotonya?')) return;
+      }
+      arr.splice(ti,1);
+      renderTemuan(kind);
+    });
+    box.querySelector('.ta-ket').addEventListener('input', ev=>{ t.ket = ev.target.value; });
+    if(kind==='hp'){
+      box.querySelector('.sel-tipe').addEventListener('change', ev=>{
+        t.tipe = ev.target.value; t.jenis = '';
+        renderTemuan(kind);
+      });
+      box.querySelector('.sel-jenis').addEventListener('change', ev=>{ t.jenis = ev.target.value; });
+    }
+    box.querySelectorAll('.ph .rm').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        t.photos.splice(parseInt(btn.dataset.pi),1);
+        renderTemuan(kind);
+      });
+    });
+    box.querySelector('.ph-add input').addEventListener('change', async function(){
+      const files = Array.from(this.files);
+      for(const f of files){
+        try{ t.photos.push(await compressImage(f)); }catch(e){ showToast('Gagal memuat salah satu foto'); }
+      }
+      renderTemuan(kind);
+    });
+  });
+}
+
+function addTemuan(kind){
+  temuanState[kind].push({ tipe:'', jenis:'', ket:'', photos:[] });
+  renderTemuan(kind);
+}
+document.getElementById('add_defisiensi').addEventListener('click',()=>addTemuan('defisiensi'));
+document.getElementById('add_hp').addEventListener('click',()=>addTemuan('hp'));
+
+function hpLabel(t){
+  return [t.tipe, t.jenis].filter(Boolean).join(' - ');
+}
+function temuanSummary(arr, kind){
+  return (arr||[]).filter(t=>t.ket||t.photos.length||t.tipe).map((t,i)=>{
+    const head = kind==='hp' ? hpLabel(t) : '';
+    const parts = [head, t.ket].filter(Boolean).join(': ');
+    return (i+1)+'. '+(parts||'(tanpa keterangan)')+(t.photos.length? ' ['+t.photos.length+' foto]':'');
+  }).join(' | ');
+}
+
+// Data lama (versi sebelum fitur temuan) dikonversi supaya tetap bisa diedit/diexport
+function normalizeEntry(e){
+  if(!Array.isArray(e._defisiensi)){
+    e._defisiensi = e.defisiensi_hara ? [{tipe:'',jenis:'',ket:e.defisiensi_hara,photos:[]}] : [];
+  }
+  if(!Array.isArray(e._hp)){
+    const arr = [];
+    if(e.hama) arr.push({tipe:'Hama',jenis:'',ket:e.hama,photos:[]});
+    if(e.penyakit) arr.push({tipe:'Penyakit',jenis:'',ket:e.penyakit,photos:[]});
+    if(!arr.length && e.hama_penyakit) arr.push({tipe:'',jenis:'',ket:e.hama_penyakit,photos:[]});
+    e._hp = arr;
+  }
+  return e;
+}
+
 function collectEntry(){
   return {
     kebun: document.getElementById('f_kebun').value.trim(),
@@ -701,12 +884,13 @@ function collectEntry(){
     pertumbuhan_tanaman: groupText('pertumbuhan_tanaman'), keterangan_pertumbuhan_tanaman: ket('pertumbuhan_tanaman'),
     mutu_panen: groupText('mutu_panen'), keterangan_mutu_panen: ket('mutu_panen'),
     keragaman: groupText('keragaman'), keterangan_keragaman: ket('keragaman'),
-    defisiensi_hara: document.getElementById('f_defisiensi').value.trim(),
+    _defisiensi: cloneTemuan(temuanState.defisiensi),
+    _hp: cloneTemuan(temuanState.hp),
+    defisiensi_hara: temuanSummary(temuanState.defisiensi,'defisiensi'),
+    hama_penyakit: temuanSummary(temuanState.hp,'hp'),
     tunasan: groupText('tunasan'), keterangan_tunasan: ket('tunasan'),
     kondisi_piringan: groupText('kondisi_piringan'), keterangan_kondisi_piringan: ket('kondisi_piringan'),
     kondisi_gawangan: groupText('kondisi_gawangan'), keterangan_kondisi_gawangan: ket('kondisi_gawangan'),
-    hama: document.getElementById('f_hama').value.trim(),
-    penyakit: document.getElementById('f_penyakit').value.trim(),
     pta_teras: groupText('pta_teras'), keterangan_pta_teras: ket('pta_teras'),
     pta_tapak: groupText('pta_tapak'), keterangan_pta_tapak: ket('pta_tapak'),
     pta_drainase: groupText('pta_drainase'), keterangan_pta_drainase: ket('pta_drainase'),
@@ -729,7 +913,8 @@ function renderList(){
   entries.forEach((e,i)=>{
     const row=document.createElement('div');
     row.className='entry';
-    const fotoCount = e._photos ? Object.keys(e._photos).length : 0;
+    const fotoCount = (e._photos ? Object.keys(e._photos).length : 0)
+      + [...(e._defisiensi||[]), ...(e._hp||[])].reduce((a,t)=>a+(t.photos||[]).length,0);
     row.innerHTML = `<div>
         <div><strong>${e.blok||'(blok?)'}</strong> — ${e.kebun||''} ${e.afd||''}</div>
         <div class="meta">TT ${e.tahun_tanam||'-'}${fotoCount? ' · 📷 '+fotoCount+' foto':''}</div>
@@ -757,9 +942,10 @@ function resetForm(){
   document.getElementById('f_afd').value='';
   document.getElementById('f_blok').value='';
   document.getElementById('f_tt').value='';
-  document.getElementById('f_defisiensi').value='';
-  document.getElementById('f_hama').value='';
-  document.getElementById('f_penyakit').value='';
+  temuanState.defisiensi = [];
+  temuanState.hp = [];
+  renderTemuan('defisiensi');
+  renderTemuan('hp');
   document.getElementById('f_rotasi').value='';
   document.getElementById('f_catatan').value='';
   Object.keys(state).forEach(k=>delete state[k]);
@@ -801,7 +987,7 @@ async function loadEntriesFromDB(){
     const req = tx.objectStore('kv').get('entries_v1');
     return new Promise(res=>{
       req.onsuccess = ()=>{
-        if(req.result){ try{ entries = JSON.parse(req.result); }catch(e){ entries=[]; } }
+        if(req.result){ try{ entries = JSON.parse(req.result).map(normalizeEntry); }catch(e){ entries=[]; } }
         res();
       };
       req.onerror = ()=>res();
@@ -819,9 +1005,11 @@ function enterEditMode(i){
   document.getElementById('f_afd').value = e.afd||'';
   document.getElementById('f_blok').value = e.blok||'';
   document.getElementById('f_tt').value = e.tahun_tanam||'';
-  document.getElementById('f_defisiensi').value = e.defisiensi_hara||'';
-  document.getElementById('f_hama').value = e.hama||'';
-  document.getElementById('f_penyakit').value = e.penyakit||'';
+  normalizeEntry(e);
+  temuanState.defisiensi = cloneTemuan(e._defisiensi);
+  temuanState.hp = cloneTemuan(e._hp);
+  renderTemuan('defisiensi');
+  renderTemuan('hp');
   document.getElementById('f_rotasi').value = e.rotasi_panen||'';
   document.getElementById('f_catatan').value = e.catatan||'';
 
@@ -968,6 +1156,7 @@ document.getElementById('btnExport').addEventListener('click',()=>{
 
   const rows = [FIELD_COLS.join(',')];
   const zipFiles = [];
+  const temuanRows = ['no_blok,kebun,afd,blok,tahun_tanam,kategori,jenis,temuan_ke,keterangan,foto'];
 
   entries.forEach((e,i)=>{
     const folder = (i+1)+'_'+sanitizeName(e.kebun)+'_'+sanitizeName(e.blok);
@@ -984,12 +1173,40 @@ document.getElementById('btnExport').addEventListener('click',()=>{
         rowObj['foto_'+key] = '';
       }
     });
+
+    // Temuan defisiensi & hama/penyakit: banyak foto per keterangan
+    normalizeEntry(e);
+    const exportTemuan = (arr, kind, prefix)=>{
+      const allPaths = [];
+      arr.forEach((t,ti)=>{
+        if(!(t.ket || t.photos.length || t.tipe)) return;
+        const paths = [];
+        t.photos.forEach((p,pi)=>{
+          const path = 'images/'+folder+'/'+prefix+'_'+(ti+1)+'_'+(pi+1)+'.jpg';
+          try{ zipFiles.push({ name:path, data:dataUriToBytes(p) }); paths.push(path); }catch(err){}
+        });
+        allPaths.push(...paths);
+        temuanRows.push([
+          i+1, e.kebun, e.afd, e.blok, e.tahun_tanam,
+          kind==='defisiensi' ? 'Defisiensi Hara' : (t.tipe||'Hama/Penyakit'),
+          kind==='defisiensi' ? '' : (t.jenis||''),
+          ti+1, t.ket, paths.join(' | ')
+        ].map(csvEscape).join(','));
+      });
+      return allPaths.join(' | ');
+    };
+    rowObj.foto_defisiensi_hara = exportTemuan(e._defisiensi, 'defisiensi', 'defisiensi');
+    rowObj.foto_hama_penyakit = exportTemuan(e._hp, 'hp', 'hamapenyakit');
+    rowObj.defisiensi_hara = temuanSummary(e._defisiensi,'defisiensi');
+    rowObj.hama_penyakit = temuanSummary(e._hp,'hp');
+
     rows.push(FIELD_COLS.map(c=>csvEscape(rowObj[c])).join(','));
   });
 
   const csv = rows.join('\n');
   const enc = new TextEncoder();
   zipFiles.push({ name:'data.csv', data: enc.encode('\uFEFF'+csv) });
+  zipFiles.push({ name:'temuan.csv', data: enc.encode('\uFEFF'+temuanRows.join('\n')) });
 
   const zipBlob = buildZip(zipFiles);
   const url = URL.createObjectURL(zipBlob);
@@ -1053,7 +1270,7 @@ document.getElementById('fileImport').addEventListener('change', function(){
       const r = rows[i];
       const obj={};
       header.forEach((h,idx)=>{ obj[h.trim()] = r[idx]!==undefined ? r[idx] : ''; });
-      if(obj.blok || obj.kebun){ entries.push(obj); added++; }
+      if(obj.blok || obj.kebun){ entries.push(normalizeEntry(obj)); added++; }
     }
     renderList();
     saveEntriesToDB();
