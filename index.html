@@ -510,7 +510,8 @@
   </div>
 
   <div class="card">
-    <h2><span class="num">03</span>PT/A &amp; Infrastruktur</h2>
+    <h2><span class="num">03</span>Konservasi Tanah dan Air</h2>
+    <p class="sub">Teras, tapak kuda, drainase, dan water saving.</p>
 
     <div class="section-block" id="g_pta_teras" style="margin-top:0;padding-top:0;border-top:none;">
       <p class="group-title">PT/A Teras</p>
@@ -532,12 +533,27 @@
       <div class="options"></div>
     </div>
 
-    <div class="section-block" id="g_jalan">
+  </div>
+
+  <div class="card">
+    <h2><span class="num">04</span>Infrastruktur</h2>
+    <p class="sub">Jalan dan jembatan panen.</p>
+
+    <div class="section-block" id="g_jalan" style="margin-top:0;padding-top:0;border-top:none;">
       <p class="group-title">Kondisi Jalan</p>
       <div class="options"></div>
     </div>
 
-    <div class="section-block field">
+    <div class="section-block" id="g_jembatan_panen">
+      <p class="group-title">Kondisi Jembatan Panen</p>
+      <div class="options"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">05</span>Lainnya</h2>
+
+    <div class="section-block field" style="margin-top:0;padding-top:0;border-top:none;">
       <label class="text-label">Rotasi Panen</label>
       <input type="text" id="f_rotasi" placeholder="mis. 7/7">
     </div>
@@ -606,6 +622,8 @@ const GROUPS = {
     ["A","Terdapat Rorak"],["B","Terdapat Guludan"] ]},
   jalan: { title:"Kondisi Jalan", options:[
     ["A","Baik"],["B","Perlu rehabilitasi"] ]},
+  jembatan_panen: { title:"Kondisi Jembatan Panen", options:[
+    ["A","Baik"],["B","Perlu rehabilitasi"] ]},
 };
 
 const state = {}; // selected letter per group key
@@ -613,7 +631,7 @@ const groupPhotos = {}; // dataURI per kategori (untuk blok yang sedang diisi)
 const PHOTO_GROUPS = [
   "situasi_lahan","cadangan_buah","pertumbuhan_tanaman","tunasan",
   "kondisi_piringan","kondisi_gawangan",
-  "pta_teras","pta_tapak","pta_drainase","pta_water","jalan"
+  "pta_teras","pta_tapak","pta_drainase","pta_water","jalan","jembatan_panen"
 ];
 
 function buildGroups(){
@@ -623,7 +641,7 @@ function buildGroups(){
     keragaman:"g_keragaman", tunasan:"g_tunasan",
     kondisi_piringan:"g_kondisi_piringan", kondisi_gawangan:"g_kondisi_gawangan",
     pta_teras:"g_pta_teras", pta_tapak:"g_pta_tapak", pta_drainase:"g_pta_drainase",
-    pta_water:"g_pta_water", jalan:"g_jalan"
+    pta_water:"g_pta_water", jalan:"g_jalan", jembatan_panen:"g_jembatan_panen"
   };
   Object.keys(GROUPS).forEach(key=>{
     const container = document.querySelector('#'+idMap[key]+' .options');
@@ -734,6 +752,7 @@ const FIELD_COLS = [
   "pta_drainase","keterangan_pta_drainase","foto_pta_drainase",
   "pta_water","keterangan_pta_water","foto_pta_water",
   "jalan","keterangan_jalan","foto_jalan",
+  "jembatan_panen","keterangan_jembatan_panen","foto_jembatan_panen",
   "rotasi_panen","catatan"
 ];
 
@@ -908,6 +927,7 @@ function collectEntry(){
     pta_drainase: groupText('pta_drainase'), keterangan_pta_drainase: ket('pta_drainase'),
     pta_water: groupText('pta_water'), keterangan_pta_water: ket('pta_water'),
     jalan: groupText('jalan'), keterangan_jalan: ket('jalan'),
+    jembatan_panen: groupText('jembatan_panen'), keterangan_jembatan_panen: ket('jembatan_panen'),
     rotasi_panen: document.getElementById('f_rotasi').value.trim(),
     catatan: document.getElementById('f_catatan').value.trim(),
     _photos: Object.assign({}, groupPhotos),

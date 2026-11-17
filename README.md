@@ -9,7 +9,9 @@ Laporan Rekomendasi Pemupukan Tanaman Kelapa Sawit.
 - Simpan banyak blok dalam satu sesi.
 - Foto lapangan bisa dilampirkan langsung per kategori (Situasi Lahan, Cadangan
   Buah, Pertumbuhan Tanaman, Tunasan, Kondisi Piringan, Kondisi Gawangan, PT/A
-  Teras, Tapak Kuda, Drainase, Water Saving, Kondisi Jalan) — otomatis dikompres.
+  Teras, Tapak Kuda, Drainase, Water Saving, Kondisi Jalan, Jembatan Panen) — otomatis dikompres.
+- Form dikelompokkan: **Konservasi Tanah dan Air** (teras, tapak kuda, drainase, water
+  saving) dan **Infrastruktur** (jalan, jembatan panen).
 - **Defisiensi Hara** dan **Hama & Penyakit** dicatat sebagai daftar temuan: tiap
   temuan berisi satu keterangan dan boleh lebih dari satu foto. Hama & Penyakit
   memakai dropdown bertingkat (Hama: ulat api, ulat kantong, tikus, kumbang badak;
