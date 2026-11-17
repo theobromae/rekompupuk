@@ -802,7 +802,10 @@ function renderTemuan(kind){
       ${selects}
       <div class="temuan-photos">
         ${t.photos.map((p,pi)=>`<div class="ph"><img src="${p}"><button type="button" class="rm" data-pi="${pi}">×</button></div>`).join('')}
-        <label class="ph-add"><span>＋</span>Foto
+        <label class="ph-add"><span>📷</span>Kamera
+          <input type="file" accept="image/*" capture="environment" style="display:none;">
+        </label>
+        <label class="ph-add"><span>🖼️</span>Galeri
           <input type="file" accept="image/*" multiple style="display:none;">
         </label>
       </div>
@@ -830,12 +833,14 @@ function renderTemuan(kind){
         renderTemuan(kind);
       });
     });
-    box.querySelector('.ph-add input').addEventListener('change', async function(){
-      const files = Array.from(this.files);
-      for(const f of files){
-        try{ t.photos.push(await compressImage(f)); }catch(e){ showToast('Gagal memuat salah satu foto'); }
-      }
-      renderTemuan(kind);
+    box.querySelectorAll('.ph-add input').forEach(inp=>{
+      inp.addEventListener('change', async function(){
+        const files = Array.from(this.files);
+        for(const f of files){
+          try{ t.photos.push(await compressImage(f)); }catch(e){ showToast('Gagal memuat salah satu foto'); }
+        }
+        renderTemuan(kind);
+      });
     });
   });
 }
