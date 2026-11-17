@@ -377,7 +377,9 @@
   .mini-photo{
     margin-top:10px;
   }
+  .mini-photo-btns{display:flex;gap:8px;}
   .mini-photo-btn{
+    flex:1;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -649,34 +651,39 @@ function buildGroups(){
       wrap.className='mini-photo';
       wrap.id='mp_'+key;
       wrap.innerHTML = `
-        <input type="file" id="mp_input_${key}" accept="image/*" capture="environment" style="display:none;">
-        <button type="button" class="mini-photo-btn" data-key="${key}">📷 Tambah foto ${GROUPS[key].title.toLowerCase()}</button>
+        <input type="file" id="mp_cam_${key}" accept="image/*" capture="environment" style="display:none;">
+        <input type="file" id="mp_gal_${key}" accept="image/*" style="display:none;">
+        <div class="mini-photo-btns">
+          <button type="button" class="mini-photo-btn" data-src="cam">📷 Kamera</button>
+          <button type="button" class="mini-photo-btn" data-src="gal">🖼️ Galeri</button>
+        </div>
         <div class="mini-thumb" id="mp_thumb_${key}"><img><button class="rm" type="button">×</button></div>`;
       parent.appendChild(wrap);
 
-      const input = wrap.querySelector('input[type=file]');
-      const btn = wrap.querySelector('.mini-photo-btn');
+      const inCam = wrap.querySelector('#mp_cam_'+key);
+      const inGal = wrap.querySelector('#mp_gal_'+key);
       const thumb = wrap.querySelector('.mini-thumb');
       const img = thumb.querySelector('img');
       const rm = thumb.querySelector('.rm');
 
-      btn.addEventListener('click', ()=> input.click());
-      input.addEventListener('change', async function(){
-        const file = this.files[0];
-        if(!file) return;
-        try{
-          const dataUri = await compressImage(file);
-          groupPhotos[key] = dataUri;
-          img.src = dataUri;
-          thumb.classList.add('show');
-          btn.textContent = '📷 Ganti foto '+GROUPS[key].title.toLowerCase();
-        }catch(e){ showToast('Gagal memuat foto'); }
-        this.value='';
+      wrap.querySelector('[data-src="cam"]').addEventListener('click', ()=> inCam.click());
+      wrap.querySelector('[data-src="gal"]').addEventListener('click', ()=> inGal.click());
+      [inCam, inGal].forEach(input=>{
+        input.addEventListener('change', async function(){
+          const file = this.files[0];
+          if(!file) return;
+          try{
+            const dataUri = await compressImage(file);
+            groupPhotos[key] = dataUri;
+            img.src = dataUri;
+            thumb.classList.add('show');
+          }catch(e){ showToast('Gagal memuat foto'); }
+          this.value='';
+        });
       });
       rm.addEventListener('click', ()=>{
         delete groupPhotos[key];
         thumb.classList.remove('show');
-        btn.textContent = '📷 Tambah foto '+GROUPS[key].title.toLowerCase();
       });
     }
   });
@@ -962,9 +969,7 @@ function resetForm(){
   Object.keys(groupPhotos).forEach(k=>delete groupPhotos[k]);
   PHOTO_GROUPS.forEach(key=>{
     const thumb = document.getElementById('mp_thumb_'+key);
-    const btn = document.querySelector('#mp_'+key+' .mini-photo-btn');
     if(thumb) thumb.classList.remove('show');
-    if(btn) btn.textContent = '📷 Tambah foto '+GROUPS[key].title.toLowerCase();
   });
 }
 
@@ -1034,9 +1039,7 @@ function enterEditMode(i){
       if(photo){
         groupPhotos[key] = photo;
         const thumb = document.getElementById('mp_thumb_'+key);
-        const btn = document.querySelector('#mp_'+key+' .mini-photo-btn');
         if(thumb){ thumb.querySelector('img').src = photo; thumb.classList.add('show'); }
-        if(btn) btn.textContent = '📷 Ganti foto '+GROUPS[key].title.toLowerCase();
       }
     });
   }
